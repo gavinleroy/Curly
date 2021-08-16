@@ -1,0 +1,7 @@
+name = "curly"
+uuid = "7486cc49-d4d6-458f-8e1b-b99820654d8b"
+authors = ["gavinleroy <gavinleroy6@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+ParserCombinator = "fae87a5f-d1ad-5cf0-8f61-c941e1580b46"
