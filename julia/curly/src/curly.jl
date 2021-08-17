@@ -18,7 +18,7 @@ module curly
 
 using ParserCombinator
 
-export @curly_str
+export @curly_str, @test, run_tests
 
 ###########
 # STRUCTS #
@@ -52,6 +52,7 @@ end
 
 struct Let <: Node
     arg
+    val
     bdy
 end
 
@@ -69,7 +70,7 @@ end
 # PARSER #
 ##########
 
-ws = p"\s*"
+ws = p"[\s\n]*"
 
 opt_ws = ws | e""
 
@@ -85,7 +86,7 @@ sub = E"{- " + ~opt_ws +  expr + ~opt_ws + expr + ~opt_ws + E"}" > Sub
 
 ifzero = E"{if0 " + ~opt_ws + expr + ~opt_ws + expr + ~opt_ws +  expr + ~opt_ws + E"}" > IfZero
 
-lete = E"{let {" + ~opt_ws + expr + ~opt_ws + expr + ~opt_ws + E"}" + expr + E"}" > Let
+lete = E"{let {" + ~opt_ws + expr + ~opt_ws + expr + ~opt_ws + E"}" + ~opt_ws + expr + ~opt_ws + E"}" > Let
 
 lambda = E"{lambda {" + ~opt_ws + expr + ~opt_ws + E"}" + ~opt_ws + expr + ~opt_ws + E"}" > Lambda
 
@@ -121,52 +122,67 @@ function interp(iz::IfZero)
     cnd = interp(iz.cnd);
     te = interp(iz.true_e);
     fe = interp(iz.false_e);
-    return quote
-        if $cnd == 0
-            return $te
-        else
-            return $fe
-        end
-    end
+    return :(($cnd == 0) ? $te : $fe)
 end
 
-# struct Let <: Node
-#     arg
-#     bdy
-# end
-
-# function interp(l::Let)
-#
-#end
+function interp(l::Let)
+    sy = interp(l.arg);
+    v = interp(l.val);
+    bdy = interp(l.bdy);
+    # Would be better to exchange for a typechecker
+    @assert typeof(sy) == Symbol;
+    return :( ($sy -> $bdy)($v) )
+end
 
 function interp(lam::Lambda)
     sy = interp(lam.arg);
     arg_ex = interp(lam.bdy);
-    return :($sy -> $arg_ex)
+    # Would be better to exchange for a typechecker
+    @assert typeof(sy) == Symbol
+    return :(($sy -> $arg_ex))
 end
 
 function interp(a::App)
     g = interp(a.f);
     p = interp(a.arg);
-    return :($g($a))
+    return :($g($p))
 end
 
 ########
 # EXEC #
 ########
 
+"Curly program string"
 macro curly_str(line)
     # parse one program (i.e. expr)
     # and then take the first result
     # as there should only be one :)
-    curly_expr = parse_one(line, prog)[1];
+    curly_expr = parse_one(strip(line), prog)[1];
     julia_expr = interp(curly_expr);
-    @show julia_expr
+    return julia_expr
 end
 
-macro curly_test(prog, expected)
-    # TODO
-    @show prog; @show expected;
+"Macro for pretty-printing test cases"
+macro test(prog, expected)
+    quote
+        if $prog == $expected
+            printstyled("[Pass] \U2713 \n", color=:green);
+        else
+            printstyled("[Failed] ==> "
+                        , $(Meta.quot(prog))
+                        , " == "
+                        , $(Meta.quot(expected)), "\n"
+                        , color=:red);
+        end
+    end
+end
+
+"Run the Curly testing suite"
+function run_tests()
+    @test curly"{+ 1 2}" 3;
+    @test curly"{+ 2 1}" 3;
+    @test curly"{+ 1 0}" 1;
+    @test curly"{+ 0 1}" 1;
 end
 
 end # module curly
