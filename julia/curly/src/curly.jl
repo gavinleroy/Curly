@@ -118,40 +118,40 @@ transform(n::CInt) = n.val
 transform(s::CSymb) = Symbol(s.sym)
 
 function transform(p::Plus)
-    l = transform(p.lhs);
-    r = transform(p.rhs);
+    l = transform(p.lhs)
+    r = transform(p.rhs)
     return :($l + $r)
 end
 
 function transform(s::Sub)
-    l = transform(s.lhs);
-    r = transform(s.rhs);
+    l = transform(s.lhs)
+    r = transform(s.rhs)
     return :($l - $r)
 end
 
 function transform(iz::IfZero)
-    cnd = transform(iz.cnd);
-    te = transform(iz.true_e);
-    fe = transform(iz.false_e);
+    cnd = transform(iz.cnd)
+    te = transform(iz.true_e)
+    fe = transform(iz.false_e)
     return :(($cnd == 0) ? $te : $fe)
 end
 
 function transform(l::Let)
-    sy = transform(l.arg);
-    v = transform(l.val);
-    bdy = transform(l.bdy);
+    sy = transform(l.arg)
+    v = transform(l.val)
+    bdy = transform(l.bdy)
     return :( ($sy -> $bdy)($v) )
 end
 
 function transform(lam::Lambda)
-    sy = transform(lam.arg);
-    arg_ex = transform(lam.bdy);
+    sy = transform(lam.arg)
+    arg_ex = transform(lam.bdy)
     return :(($sy -> $arg_ex))
 end
 
 function transform(a::App)
-    g = transform(a.f);
-    p = transform(a.arg);
+    g = transform(a.f)
+    p = transform(a.arg)
     return :($g($p))
 end
 
@@ -164,7 +164,7 @@ macro curly_str(source)
     # parse one program (i.e. cexpr)
     # and then take the first result
     # as there should only be one :)
-    curly_expr = parse_one(source, prog)[1];
+    curly_expr = parse_one(source, prog)[1]
     return transform(curly_expr)
 end
 
@@ -187,16 +187,16 @@ end
 "Run the Curly test suite"
 function run_tests()
     # Basic additive properties
-    @test curly"{+ 1 2}" 3;
-    @test curly"{+ 2 1}" 3;
-    @test curly"{+ 1 {+ 2 3}}" 6;
-    @test curly"{+ {+ 1 2} 3}" 6;
-    @test curly"{+ 1 0}" 1;
-    @test curly"{+ 0 1}" 1;
+    @test curly"{+ 1 2}" 3
+    @test curly"{+ 2 1}" 3
+    @test curly"{+ 1 {+ 2 3}}" 6
+    @test curly"{+ {+ 1 2} 3}" 6
+    @test curly"{+ 1 0}" 1
+    @test curly"{+ 0 1}" 1
 
     # subtractive properties
-    @test curly"{- 42 0}" 42;
-    @test curly"{- 0 42}" -42;
+    @test curly"{- 42 0}" 42
+    @test curly"{- 0 42}" -42
 
     # Handle arbitrary whitespace
     @test curly"""
@@ -207,8 +207,8 @@ function run_tests()
           """ 0
 
     # simple lambdas and application
-    @test curly"{{lambda {x} x} 6}" 6;
-    @test curly"{{lambda {x} {+ x 1}} 6}" 7;
+    @test curly"{{lambda {x} x} 6}" 6
+    @test curly"{{lambda {x} {+ x 1}} 6}" 7
     @test curly"""
           {{{lambda {x}
             {lambda {y}
