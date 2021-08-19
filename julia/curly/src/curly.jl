@@ -57,7 +57,7 @@ struct Let <: Node
 end
 
 struct Lambda <: Node
-    arg
+    param
     bdy
 end
 
@@ -137,22 +137,22 @@ function transform(iz::IfZero)
 end
 
 function transform(l::Let)
-    sy = transform(l.arg)
-    v = transform(l.val)
+    sym = transform(l.arg)
+    arg = transform(l.val)
     bdy = transform(l.bdy)
-    return :( ($sy -> $bdy)($v) )
+    return :(($sym -> $bdy)($arg))
 end
 
 function transform(lam::Lambda)
-    sy = transform(lam.arg)
-    arg_ex = transform(lam.bdy)
-    return :(($sy -> $arg_ex))
+    sy = transform(lam.param)
+    arg = transform(lam.bdy)
+    return :(($sy -> $arg))
 end
 
 function transform(a::App)
     g = transform(a.f)
-    p = transform(a.arg)
-    return :($g($p))
+    arg = transform(a.arg)
+    return :($g($arg))
 end
 
 ########
@@ -174,11 +174,11 @@ macro test(prog, expected)
         if $prog == $expected
             printstyled("[Pass] \U2713 \n", color=:green)
         else
-            printstyled("[Fail] \U0021 \n"
+            printstyled("[Fail] \U0021 \n\t"
                         , $(Meta.quot(prog))
-                        , " == "
+                        , "\n\tExpected value : "
                         , $(Meta.quot(expected)), "\n"
-                        , " Received : ", $prog
+                        , "\tActual : ", $prog
                         , color=:red)
         end
     end
