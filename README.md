@@ -6,6 +6,6 @@ There are written posts about the creation of Curly in each langauge below:
 
 **Note : posts are not yet published**
 
-* [Julia](...)
+* [Julia](https://gavinleroy.com/blog/2021/08/curly-julia/)
 
 * [MetaOCaml](...)
